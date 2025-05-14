@@ -39,6 +39,26 @@ export default function TournamentPlay() {
   
   // Initialiser l'état du tournoi
   const [tournamentState, setTournamentState] = useState<TournamentState>(() => {
+    // Tenter de récupérer l'état sauvegardé
+    const savedState = localStorage.getItem('tournament_state');
+    if (savedState) {
+      const parsedState = JSON.parse(savedState);
+      // Vérifier si l'état sauvegardé correspond aux tables actuelles
+      const hasAllTables = tables.every(table => 
+        parsedState.tableStates && parsedState.tableStates[table.id]
+      );
+      
+      if (hasAllTables) {
+        return {
+          currentBoard: parsedState.currentBoard,
+          totalBoards: parsedState.totalBoards,
+          tableStates: parsedState.tableStates,
+          pairScores: parsedState.pairScores
+        };
+      }
+    }
+
+    // Si pas d'état sauvegardé ou état invalide, initialiser un nouvel état
     const initialTableStates: { [key: string]: TableState } = {};
     const initialPairScores: PairScore[] = [];
 
@@ -46,6 +66,7 @@ export default function TournamentPlay() {
       initialTableStates[table.id] = {
         elapsedTime: 0,
         isFinished: false,
+        finishTime: 0
       };
 
       if (table.players.north && table.players.south) {
@@ -75,13 +96,22 @@ export default function TournamentPlay() {
       }
     });
 
-    return {
+    const initialState = {
       currentBoard: 1,
       totalBoards: 6,
       tableStates: initialTableStates,
       pairScores: initialPairScores,
     };
+
+    // Sauvegarder l'état initial
+    localStorage.setItem('tournament_state', JSON.stringify(initialState));
+    return initialState;
   });
+
+  // Sauvegarder l'état à chaque modification
+  useEffect(() => {
+    localStorage.setItem('tournament_state', JSON.stringify(tournamentState));
+  }, [tournamentState]);
 
   // Simuler la fin de la donne pour une table
   useEffect(() => {
@@ -161,12 +191,16 @@ export default function TournamentPlay() {
           score: pairScore.score + Math.floor(Math.random() * 100),
         }));
 
-        return {
+        const newState = {
           ...prev,
           currentBoard: prev.currentBoard + 1,
           tableStates: newTableStates,
           pairScores: newPairScores,
         };
+
+        // Sauvegarder immédiatement le nouvel état
+        localStorage.setItem('tournament_state', JSON.stringify(newState));
+        return newState;
       });
     }
   }, [tables, tournamentState.currentBoard, tournamentState.totalBoards]);
@@ -189,6 +223,9 @@ export default function TournamentPlay() {
 
   // Terminer le tournoi
   const handleEndTournament = () => {
+    // Nettoyer le localStorage avant de naviguer vers les résultats
+    localStorage.removeItem('tournament_state');
+    
     navigate('/tournament/results', {
       state: {
         tables,
