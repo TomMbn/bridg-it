@@ -52,16 +52,6 @@ export default function TournamentSetup() {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleBridgeItAssignment = (tableId: string, bridgeItId: string | null) => {
-    setTables(prevTables =>
-      prevTables.map(table =>
-        table.id === tableId
-          ? { ...table, bridgeIt: bridgeItId }
-          : table
-      )
-    );
-  };
-
   const handlePlayerAssignment = (
     tableId: string,
     position: 'north' | 'south' | 'east' | 'west',
