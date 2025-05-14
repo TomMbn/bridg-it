@@ -37,7 +37,7 @@ export default function Dashboard() {
           Sélection des distributeurs
         </Typography>
         <Typography variant="body1" sx={{ mb: 4 }}>
-          Sélectionnez les distributeurs Bridge-it à utiliser pour le tournoi
+          Sélectionnez les distributeurs Bridg'it à utiliser pour le tournoi
         </Typography>
 
         <Grid container spacing={3}>
@@ -56,7 +56,13 @@ export default function Dashboard() {
                     {bridgeIt.name}
                   </Typography>
                   <Chip
-                    label={bridgeIt.status}
+                    label={
+                      bridgeIt.status === 'available'
+                        ? 'Disponible'
+                        : bridgeIt.status === 'busy'
+                        ? 'Occupé'
+                        : 'En maintenance'
+                    }
                     color={
                       bridgeIt.status === 'available'
                         ? 'success'
@@ -66,9 +72,6 @@ export default function Dashboard() {
                     }
                     sx={{ mb: 2 }}
                   />
-                  <Typography variant="body2" color="text.secondary">
-                    Dernière maintenance: {bridgeIt.lastMaintenance}
-                  </Typography>
                 </CardContent>
                 <CardActions>
                   <Button

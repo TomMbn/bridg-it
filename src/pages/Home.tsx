@@ -33,10 +33,10 @@ export default function Home() {
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Bridge-it Tournament Manager
+            Bridg'it
           </Typography>
           <Typography variant="body1" align="center" sx={{ mb: 4 }}>
-            Bienvenue sur la plateforme de gestion des tournois de bridge
+            Gérez vos tournois avec Bridg'it
           </Typography>
           <Box component="form" sx={{ mt: 1 }}>
             <TextField

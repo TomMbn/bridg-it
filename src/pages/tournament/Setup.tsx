@@ -14,7 +14,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { mockPlayers } from '../../mocks/data';
+import { mockPlayers, mockBridgeIts } from '../../mocks/data';
 import { TableConfig } from '../../types/tournament';
 import { GridWrapper } from '../../components/common/GridWrapper';
 
@@ -78,6 +78,16 @@ export default function TournamentSetup() {
     }
   };
 
+  const handleBridgeItAssignment = (tableId: string, bridgeItId: string | null) => {
+    setTables(prevTables =>
+      prevTables.map(table =>
+        table.id === tableId
+          ? { ...table, bridgeIt: bridgeItId }
+          : table
+      )
+    );
+  };
+
   const handleStartTournament = () => {
     navigate('/tournament/play', {
       state: {
@@ -104,7 +114,57 @@ export default function TournamentSetup() {
 
   const getStepContent = (step: number) => {
     switch (step) {
-      case 0:
+      case 0: // Attribution des tables
+        return (
+          <GridWrapper container spacing={3}>
+            {tables.map((table: TableConfig) => (
+              <GridWrapper isItem xs={12} md={6} key={table.id}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Table {table.number}
+                  </Typography>
+                  <FormControl 
+                    fullWidth 
+                    sx={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: 1,
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  >
+                    <InputLabel>Bridg'it</InputLabel>
+                    <Select
+                      value={table.bridgeIt || ''}
+                      onChange={(e) => handleBridgeItAssignment(table.id, e.target.value)}
+                      label="Bridg'it"
+                    >
+                      {mockBridgeIts
+                        .filter(bridgeIt => 
+                          // Vérifier si le bridg'it fait partie des bridg'its sélectionnés
+                          selectedBridgeItIds.includes(bridgeIt.id) &&
+                          // Et qu'il n'est pas déjà attribué à une autre table
+                          !tables.some(t => 
+                            t.id !== table.id && t.bridgeIt === bridgeIt.id
+                          )
+                        )
+                        .map(bridgeIt => (
+                          <MenuItem key={bridgeIt.id} value={bridgeIt.id}>
+                            {bridgeIt.name} (ID: {bridgeIt.id})
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
+                </Paper>
+              </GridWrapper>
+            ))}
+          </GridWrapper>
+        );
+
+      case 1: // Assignation des joueurs
         return (
           <GridWrapper container spacing={3}>
             {tables.map((table: TableConfig) => (
@@ -174,77 +234,7 @@ export default function TournamentSetup() {
           </GridWrapper>
         );
 
-      case 1:
-        return (
-          <GridWrapper container spacing={3}>
-            {tables.map((table: TableConfig) => (
-              <GridWrapper isItem xs={12} md={6} key={table.id}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Table {table.number}
-                  </Typography>
-                  <GridWrapper container spacing={2}>
-                    {(['north', 'south', 'east', 'west'] as const).map(position => (
-                      <GridWrapper isItem xs={12} sm={6} md={3} key={position}>
-                        <FormControl 
-                          fullWidth 
-                          sx={{
-                            backgroundColor: '#ffffff',
-                            borderRadius: 1,
-                            '& .MuiOutlinedInput-root': {
-                              '&:hover fieldset': {
-                                borderColor: 'primary.main',
-                              },
-                            },
-                          }}
-                        >
-                          <InputLabel>
-                            {position.charAt(0).toUpperCase() + position.slice(1)}
-                          </InputLabel>
-                          <Select
-                            value={table.players[position] || ''}
-                            onChange={(e) => handlePlayerAssignment(table.id, position, e.target.value)}
-                            label={position.charAt(0).toUpperCase() + position.slice(1)}
-                          >
-                            {mockPlayers
-                              .filter(player => {
-                                // Vérifier si le joueur est déjà utilisé dans une autre table
-                                const isUsedInOtherTable = tables.some(t => 
-                                  t.id !== table.id && (
-                                    t.players.north === player.id ||
-                                    t.players.south === player.id ||
-                                    t.players.east === player.id ||
-                                    t.players.west === player.id
-                                  )
-                                );
-
-                                // Vérifier si le joueur est déjà utilisé dans la table courante
-                                const isUsedInCurrentTable = Object.entries(table.players)
-                                  .some(([pos, playerId]) => 
-                                    pos !== position && playerId === player.id
-                                  );
-
-                                // Le joueur est disponible s'il n'est pas utilisé dans une autre table
-                                // ET s'il n'est pas déjà utilisé dans la table courante
-                                return !isUsedInOtherTable && !isUsedInCurrentTable;
-                              })
-                              .map(player => (
-                                <MenuItem key={player.id} value={player.id}>
-                                  {player.name} (Classement: {player.ranking})
-                                </MenuItem>
-                              ))}
-                          </Select>
-                        </FormControl>
-                      </GridWrapper>
-                    ))}
-                  </GridWrapper>
-                </Paper>
-              </GridWrapper>
-            ))}
-          </GridWrapper>
-        );
-
-      case 2:
+      case 2: // Import PBN
         return (
           <Box>
             <Paper sx={{ p: 3 }}>
@@ -304,12 +294,14 @@ export default function TournamentSetup() {
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
           <Button
+            color="inherit"
             disabled={activeStep === 0}
             onClick={handleBack}
             sx={{ mr: 1 }}
           >
             Retour
           </Button>
+
           {activeStep === steps.length - 1 ? (
             <Button
               variant="contained"

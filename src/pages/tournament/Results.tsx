@@ -13,7 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { mockPlayers } from '../../mocks/data';
 import { TableConfig, PairScore } from '../../types/tournament';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -66,7 +66,7 @@ export default function TournamentResults() {
         score.score.toString()
       ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [['Position', 'Paire', 'Table', 'Score']],
       body: nsData,
       startY: 50,
@@ -75,11 +75,9 @@ export default function TournamentResults() {
       alternateRowStyles: { fillColor: [245, 245, 245] },
     });
 
-    const finalY = (doc as any).previousAutoTable.finalY;
-
     // Classement Est/Ouest
     doc.setFontSize(16);
-    doc.text('Classement Est/Ouest', 14, finalY + 20);
+    doc.text('Classement Est/Ouest', 14, doc.lastAutoTable.finalY + 20);
 
     const ewData = pairScores
       .filter(score => score.direction === 'EW')
@@ -91,10 +89,10 @@ export default function TournamentResults() {
         score.score.toString()
       ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [['Position', 'Paire', 'Table', 'Score']],
       body: ewData,
-      startY: finalY + 25,
+      startY: doc.lastAutoTable.finalY + 25,
       theme: 'grid',
       headStyles: { fillColor: [25, 118, 210] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -102,7 +100,7 @@ export default function TournamentResults() {
 
     // Pied de page
     doc.setFontSize(10);
-    doc.text('Bridge-it Tournament Manager', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+    doc.text("Bridg'it", doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 
     // Sauvegarder le PDF
     doc.save('resultats-tournoi-bridge.pdf');
