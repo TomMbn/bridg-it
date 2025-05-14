@@ -1,6 +1,4 @@
-import { Grid, GridProps, Theme } from '@mui/material';
-import { ElementType } from 'react';
-import { SystemProps } from '@mui/system';
+import { Grid, GridProps } from '@mui/material';
 
 type ResponsiveGridProps = {
   xs?: number;

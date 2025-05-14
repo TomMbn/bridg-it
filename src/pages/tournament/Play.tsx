@@ -16,7 +16,7 @@ import {
   Chip,
 } from '@mui/material';
 import { mockPlayers } from '../../mocks/data';
-import { TableConfig, TableScore, PairScore } from '../../types/tournament';
+import { TableConfig, PairScore } from '../../types/tournament';
 import { GridItem } from '../../components/common/GridItem';
 
 interface TableState {

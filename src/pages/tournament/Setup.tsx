@@ -13,9 +13,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
 } from '@mui/material';
-import { mockBridgeIts, mockPlayers } from '../../mocks/data';
+import { mockPlayers } from '../../mocks/data';
 import { TableConfig } from '../../types/tournament';
 import { GridWrapper } from '../../components/common/GridWrapper';
 
