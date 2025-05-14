@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
-import { TournamentState, TableState, BoardResult } from '../types/tournament';
+import { TableConfig, TournamentState, TableState, BoardResult } from '../types/tournament';
 
 const STORAGE_KEY = 'tournament_state';
 
@@ -17,7 +17,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
     case 'UPDATE_TIME':
       newState = {
         ...state,
-        tables: state.tables.map(table =>
+        tables: state.tables.map((table: TableConfig) =>
           table.id === action.payload.tableId
             ? { ...table, timeElapsed: action.payload.time }
             : table
@@ -28,7 +28,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
     case 'FINISH_BOARD':
       newState = {
         ...state,
-        tables: state.tables.map(table =>
+        tables: state.tables.map((table: TableConfig) =>
           table.id === action.payload.tableId
             ? { ...table, isFinished: true }
             : table
@@ -41,7 +41,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
       newState = {
         ...state,
         currentBoard: state.currentBoard + 1,
-        tables: state.tables.map(table => ({
+        tables: state.tables.map((table: TableConfig) => ({
           ...table,
           timeElapsed: 0,
           targetFinishTime: Math.floor(Math.random() * 30) + 1,

@@ -12,6 +12,7 @@ import {
   Chip,
 } from '@mui/material';
 import { mockBridgeIts } from '../mocks/data';
+import { GridItem } from '../components/common/GridItem';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function Dashboard() {
 
         <Grid container spacing={3}>
           {mockBridgeIts.map(bridgeIt => (
-            <Grid item xs={12} sm={6} md={4} key={bridgeIt.id}>
+            <GridItem xs={12} sm={6} md={4} key={bridgeIt.id}>
               <Card sx={{ 
                 backgroundColor: '#ffffff',
                 borderRadius: 2,
@@ -80,7 +81,7 @@ export default function Dashboard() {
                   </Button>
                 </CardActions>
               </Card>
-            </Grid>
+            </GridItem>
           ))}
         </Grid>
 

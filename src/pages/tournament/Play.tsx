@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { mockPlayers } from '../../mocks/data';
 import { TableConfig, TableScore, PairScore } from '../../types/tournament';
+import { GridItem } from '../../components/common/GridItem';
 
 interface TableState {
   elapsedTime: number;
@@ -47,29 +48,31 @@ export default function TournamentPlay() {
         isFinished: false,
       };
 
-      // Créer les scores pour la paire Nord/Sud
-      initialPairScores.push({
-        tableId: table.id,
-        pairId: `${table.players.north}-${table.players.south}`,
-        players: {
-          player1Id: table.players.north,
-          player2Id: table.players.south,
-        },
-        direction: 'NS',
-        score: 0,
-      });
+      if (table.players.north && table.players.south) {
+        initialPairScores.push({
+          tableId: table.id,
+          pairId: `${table.players.north}-${table.players.south}`,
+          players: {
+            player1Id: table.players.north,
+            player2Id: table.players.south,
+          },
+          direction: 'NS',
+          score: 0,
+        });
+      }
 
-      // Créer les scores pour la paire Est/Ouest
-      initialPairScores.push({
-        tableId: table.id,
-        pairId: `${table.players.east}-${table.players.west}`,
-        players: {
-          player1Id: table.players.east,
-          player2Id: table.players.west,
-        },
-        direction: 'EW',
-        score: 0,
-      });
+      if (table.players.east && table.players.west) {
+        initialPairScores.push({
+          tableId: table.id,
+          pairId: `${table.players.east}-${table.players.west}`,
+          players: {
+            player1Id: table.players.east,
+            player2Id: table.players.west,
+          },
+          direction: 'EW',
+          score: 0,
+        });
+      }
     });
 
     return {
@@ -222,7 +225,7 @@ export default function TournamentPlay() {
               : formatTime(tableState.elapsedTime);
 
             return (
-              <Grid item xs={12} md={6} key={table.id}>
+              <GridItem xs={12} md={6} key={table.id}>
                 <Paper sx={{ 
                   p: 3,
                   backgroundColor: '#ffffff',
@@ -248,17 +251,17 @@ export default function TournamentPlay() {
                   </Box>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12}>
+                    <GridItem xs={12}>
                       <Typography variant="body1">
                         Nord/Sud: {mockPlayers.find(p => p.id === table.players.north)?.name} / {mockPlayers.find(p => p.id === table.players.south)?.name}
                       </Typography>
                       <Typography variant="body1">
                         Est/Ouest: {mockPlayers.find(p => p.id === table.players.east)?.name} / {mockPlayers.find(p => p.id === table.players.west)?.name}
                       </Typography>
-                    </Grid>
+                    </GridItem>
                   </Grid>
                 </Paper>
-              </Grid>
+              </GridItem>
             );
           })}
         </Grid>

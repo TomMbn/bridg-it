@@ -9,7 +9,6 @@ import {
   StepLabel,
   Button,
   Paper,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -18,6 +17,7 @@ import {
 } from '@mui/material';
 import { mockBridgeIts, mockPlayers } from '../../mocks/data';
 import { TableConfig } from '../../types/tournament';
+import { GridWrapper } from '../../components/common/GridWrapper';
 
 interface LocationState {
   selectedBridgeIts: string[];
@@ -117,67 +117,16 @@ export default function TournamentSetup() {
     switch (step) {
       case 0:
         return (
-          <Grid container spacing={3}>
+          <GridWrapper container spacing={3}>
             {tables.map((table: TableConfig) => (
-              <Grid item xs={12} md={6} key={table.id}>
-                <Paper sx={{ 
-                  p: 3,
-                  backgroundColor: '#ffffff',
-                  borderRadius: 2,
-                  transition: 'all 0.3s ease',
-                  mb: 2,
-                }}>
-                  <Typography variant="h6" gutterBottom>
-                    Table {table.number}
-                  </Typography>
-                  <FormControl 
-                    fullWidth 
-                    sx={{
-                      backgroundColor: '#ffffff',
-                      borderRadius: 1,
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main',
-                        },
-                      },
-                    }}
-                  >
-                    <InputLabel>Bridge-it</InputLabel>
-                    <Select
-                      value={table.bridgeIt || ''}
-                      onChange={(e) => handleBridgeItAssignment(table.id, e.target.value)}
-                      label="Bridge-it"
-                    >
-                      {mockBridgeIts
-                        .filter(bi => selectedBridgeItIds.includes(bi.id))
-                        .filter(bi => 
-                          !tables.some(t => t.bridgeIt === bi.id && t.id !== table.id)
-                        )
-                        .map(bi => (
-                          <MenuItem key={bi.id} value={bi.id}>
-                            {bi.name}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        );
-
-      case 1:
-        return (
-          <Grid container spacing={3}>
-            {tables.map(table => (
-              <Grid item xs={12} key={table.id}>
+              <GridWrapper isItem xs={12} md={6} key={table.id}>
                 <Paper sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom>
                     Table {table.number}
                   </Typography>
-                  <Grid container spacing={2}>
+                  <GridWrapper container spacing={2}>
                     {(['north', 'south', 'east', 'west'] as const).map(position => (
-                      <Grid item xs={12} sm={6} md={3} key={position}>
+                      <GridWrapper isItem xs={12} sm={6} md={3} key={position}>
                         <FormControl 
                           fullWidth 
                           sx={{
@@ -227,13 +176,83 @@ export default function TournamentSetup() {
                               ))}
                           </Select>
                         </FormControl>
-                      </Grid>
+                      </GridWrapper>
                     ))}
-                  </Grid>
+                  </GridWrapper>
                 </Paper>
-              </Grid>
+              </GridWrapper>
             ))}
-          </Grid>
+          </GridWrapper>
+        );
+
+      case 1:
+        return (
+          <GridWrapper container spacing={3}>
+            {tables.map((table: TableConfig) => (
+              <GridWrapper isItem xs={12} md={6} key={table.id}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Table {table.number}
+                  </Typography>
+                  <GridWrapper container spacing={2}>
+                    {(['north', 'south', 'east', 'west'] as const).map(position => (
+                      <GridWrapper isItem xs={12} sm={6} md={3} key={position}>
+                        <FormControl 
+                          fullWidth 
+                          sx={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: 1,
+                            '& .MuiOutlinedInput-root': {
+                              '&:hover fieldset': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          }}
+                        >
+                          <InputLabel>
+                            {position.charAt(0).toUpperCase() + position.slice(1)}
+                          </InputLabel>
+                          <Select
+                            value={table.players[position] || ''}
+                            onChange={(e) => handlePlayerAssignment(table.id, position, e.target.value)}
+                            label={position.charAt(0).toUpperCase() + position.slice(1)}
+                          >
+                            {mockPlayers
+                              .filter(player => {
+                                // Vérifier si le joueur est déjà utilisé dans une autre table
+                                const isUsedInOtherTable = tables.some(t => 
+                                  t.id !== table.id && (
+                                    t.players.north === player.id ||
+                                    t.players.south === player.id ||
+                                    t.players.east === player.id ||
+                                    t.players.west === player.id
+                                  )
+                                );
+
+                                // Vérifier si le joueur est déjà utilisé dans la table courante
+                                const isUsedInCurrentTable = Object.entries(table.players)
+                                  .some(([pos, playerId]) => 
+                                    pos !== position && playerId === player.id
+                                  );
+
+                                // Le joueur est disponible s'il n'est pas utilisé dans une autre table
+                                // ET s'il n'est pas déjà utilisé dans la table courante
+                                return !isUsedInOtherTable && !isUsedInCurrentTable;
+                              })
+                              .map(player => (
+                                <MenuItem key={player.id} value={player.id}>
+                                  {player.name} (Classement: {player.ranking})
+                                </MenuItem>
+                              ))}
+                          </Select>
+                        </FormControl>
+                      </GridWrapper>
+                    ))}
+                  </GridWrapper>
+                </Paper>
+              </GridWrapper>
+            ))}
+          </GridWrapper>
         );
 
       case 2:

@@ -11,16 +11,40 @@ export interface Player {
   ranking: number;
 }
 
+export interface TablePlayers {
+  north: string | null;
+  south: string | null;
+  east: string | null;
+  west: string | null;
+}
+
 export interface TableConfig {
   id: string;
   number: number;
   bridgeIt: string | null;
-  players: {
-    north: string | null;
-    south: string | null;
-    east: string | null;
-    west: string | null;
-  };
+  players: TablePlayers;
+}
+
+export interface TableState {
+  elapsedTime: number;
+  isFinished: boolean;
+  finishTime?: number;
+}
+
+export interface TournamentState {
+  currentBoard: number;
+  totalBoards: number;
+  tables: TableConfig[];
+  tableStates: { [key: string]: TableState };
+  pairScores: PairScore[];
+  boardResults: BoardResult[];
+  isActive: boolean;
+}
+
+export interface BoardResult {
+  boardNumber: number;
+  tableId: string;
+  score: number;
 }
 
 export interface TableScore {
