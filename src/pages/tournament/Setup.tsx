@@ -13,7 +13,35 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  ListItemIcon,
 } from '@mui/material';
+import {
+  Delete as DeleteIcon,
+  DragIndicator as DragIndicatorIcon,
+  Description as DescriptionIcon,
+} from '@mui/icons-material';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { mockPlayers, mockBridgeIts } from '../../mocks/data';
 import { TableConfig } from '../../types/tournament';
 import { GridWrapper } from '../../components/common/GridWrapper';
@@ -23,6 +51,73 @@ interface LocationState {
 }
 
 const steps = ['Attribution des tables', 'Assignation des joueurs', 'Import PBN'];
+
+// Composant pour un élément de fichier triable
+function SortableFileItem({ file, index, onDelete }: { file: File; index: number; onDelete: (index: number) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: file.name });
+
+  const style = {
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative' as const,
+    opacity: isDragging ? 0.5 : 1,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    bgcolor: isDragging ? 'action.hover' : 'background.paper',
+    '&:hover': {
+      bgcolor: 'action.hover',
+    },
+    mb: 1,
+    borderRadius: 1,
+    border: isDragging ? '1px solid' : 'none',
+    borderColor: 'primary.main',
+  };
+
+  return (
+    <ListItem
+      ref={setNodeRef}
+      sx={style}
+    >
+      <Box {...attributes} {...listeners} sx={{ display: 'flex', alignItems: 'center', width: 'calc(100% - 48px)', cursor: 'grab' }}>
+        <ListItemIcon>
+          <DragIndicatorIcon />
+        </ListItemIcon>
+        <ListItemIcon>
+          <DescriptionIcon />
+        </ListItemIcon>
+        <ListItemText
+          primary={file.name}
+          secondary={`Taille: ${(file.size / 1024).toFixed(2)} KB`}
+        />
+      </Box>
+      <Box sx={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
+        <IconButton
+          edge="end"
+          aria-label="delete"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(index);
+          }}
+          sx={{ 
+            '&:hover': { 
+              bgcolor: 'error.light',
+              color: 'common.white',
+            }
+          }}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Box>
+    </ListItem>
+  );
+}
 
 export default function TournamentSetup() {
   const location = useLocation();
@@ -43,6 +138,13 @@ export default function TournamentSetup() {
     }))
   );
   const [pbnFiles, setPbnFiles] = useState<File[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -73,8 +175,26 @@ export default function TournamentSetup() {
   };
 
   const handlePBNUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setPbnFiles(Array.from(event.target.files));
+    const fileList = event.target.files;
+    if (fileList) {
+      const newFiles = Array.from(fileList) as File[];
+      setPbnFiles(prevFiles => [...prevFiles, ...newFiles]);
+    }
+  };
+
+  const handleDeleteFile = (index: number) => {
+    setPbnFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setPbnFiles((files) => {
+        const oldIndex = files.findIndex((file) => file.name === active.id);
+        const newIndex = files.findIndex((file) => file.name === over.id);
+        return arrayMove(files, oldIndex, newIndex);
+      });
     }
   };
 
@@ -241,29 +361,48 @@ export default function TournamentSetup() {
               <Typography variant="h6" gutterBottom>
                 Import des fichiers PBN
               </Typography>
-              <input
-                accept=".pbn"
-                style={{ display: 'none' }}
-                id="pbn-file-upload"
-                multiple
-                type="file"
-                onChange={handlePBNUpload}
-              />
-              <label htmlFor="pbn-file-upload">
-                <Button variant="contained" component="span">
-                  Sélectionner les fichiers PBN
-                </Button>
-              </label>
+              <Box sx={{ mb: 3 }}>
+                <input
+                  accept=".pbn"
+                  style={{ display: 'none' }}
+                  id="pbn-file-upload"
+                  multiple
+                  type="file"
+                  onChange={handlePBNUpload}
+                />
+                <label htmlFor="pbn-file-upload">
+                  <Button variant="contained" component="span">
+                    Sélectionner les fichiers PBN
+                  </Button>
+                </label>
+              </Box>
               {pbnFiles.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1">
-                    Fichiers sélectionnés :
-                  </Typography>
-                  {pbnFiles.map((file, index) => (
-                    <Typography key={index} variant="body2">
-                      {file.name}
-                    </Typography>
-                  ))}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={pbnFiles.map(file => file.name)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <List sx={{
+                        bgcolor: 'background.paper',
+                        borderRadius: 1,
+                        minHeight: '50px',
+                      }}>
+                        {pbnFiles.map((file, index) => (
+                          <SortableFileItem
+                            key={file.name}
+                            file={file}
+                            index={index}
+                            onDelete={handleDeleteFile}
+                          />
+                        ))}
+                      </List>
+                    </SortableContext>
+                  </DndContext>
                 </Box>
               )}
             </Paper>
