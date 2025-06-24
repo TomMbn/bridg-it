@@ -44,7 +44,8 @@ export interface TournamentState {
 export interface BoardResult {
   boardNumber: number;
   tableId: string;
-  score: number;
+  nsScore: number;
+  ewScore: number;
 }
 
 export interface TableScore {

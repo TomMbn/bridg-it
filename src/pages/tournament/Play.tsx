@@ -16,7 +16,7 @@ import {
   Chip,
 } from '@mui/material';
 import { mockPlayers } from '../../mocks/data';
-import { TableConfig, PairScore } from '../../types/tournament';
+import { TableConfig, PairScore, BoardResult } from '../../types/tournament';
 import { GridItem } from '../../components/common/GridItem';
 
 interface TableState {
@@ -30,6 +30,7 @@ interface TournamentState {
   totalBoards: number;
   tableStates: { [key: string]: TableState };
   pairScores: PairScore[];
+  boardResults: BoardResult[];
 }
 
 export default function TournamentPlay() {
@@ -53,7 +54,8 @@ export default function TournamentPlay() {
           currentBoard: parsedState.currentBoard,
           totalBoards: parsedState.totalBoards,
           tableStates: parsedState.tableStates,
-          pairScores: parsedState.pairScores
+          pairScores: parsedState.pairScores,
+          boardResults: parsedState.boardResults || []
         };
       }
     }
@@ -61,6 +63,7 @@ export default function TournamentPlay() {
     // Si pas d'état sauvegardé ou état invalide, initialiser un nouvel état
     const initialTableStates: { [key: string]: TableState } = {};
     const initialPairScores: PairScore[] = [];
+    const initialBoardResults: BoardResult[] = [];
 
     tables.forEach(table => {
       initialTableStates[table.id] = {
@@ -101,6 +104,7 @@ export default function TournamentPlay() {
       totalBoards: 6,
       tableStates: initialTableStates,
       pairScores: initialPairScores,
+      boardResults: initialBoardResults,
     };
 
     // Sauvegarder l'état initial
@@ -116,8 +120,8 @@ export default function TournamentPlay() {
   // Simuler la fin de la donne pour une table
   useEffect(() => {
     tables.forEach(table => {
-      // Générer un temps de fin aléatoire entre 5 et 15 secondes pour chaque table
-      const finishTime = Math.floor(Math.random() * 11) + 5; // 5-15 secondes
+      // Générer un temps de fin aléatoire entre 1 et 5 secondes pour chaque table
+      const finishTime = Math.floor(Math.random() * 5) + 1; // 1-5 secondes
       const timer = setTimeout(() => {
         setTournamentState(prev => ({
           ...prev,
@@ -178,24 +182,53 @@ export default function TournamentPlay() {
     if (tournamentState.currentBoard < tournamentState.totalBoards) {
       setTournamentState(prev => {
         const newTableStates: { [key: string]: TableState } = {};
+        const newBoardResults: BoardResult[] = [...prev.boardResults];
+        
         tables.forEach(table => {
           newTableStates[table.id] = {
             elapsedTime: 0,
             isFinished: false,
           };
+
+          // Générer un score pour la table (entre 50 et 650 points)
+          const nsScore = Math.floor(Math.random() * 600) + 50;
+          const ewScore = Math.floor(Math.random() * 600) + 50;
+          
+          // Ajouter les résultats de la donne pour cette table
+          newBoardResults.push({
+            boardNumber: prev.currentBoard,
+            tableId: table.id,
+            nsScore: nsScore,
+            ewScore: ewScore
+          });
         });
 
-        // Mettre à jour les scores des paires
-        const newPairScores = prev.pairScores.map(pairScore => ({
-          ...pairScore,
-          score: pairScore.score + Math.floor(Math.random() * 100),
-        }));
+        // Mettre à jour les scores des paires en fonction des résultats de la donne
+        const newPairScores = prev.pairScores.map(pairScore => {
+          const tableResults = newBoardResults
+            .filter(result => 
+              result.tableId === pairScore.tableId && 
+              result.boardNumber === prev.currentBoard
+            );
+          
+          const boardScore = tableResults.reduce((sum, result) => {
+            // Utiliser le score approprié selon la direction de la paire
+            const score = pairScore.direction === 'NS' ? result.nsScore : result.ewScore;
+            return sum + score;
+          }, 0);
+
+          return {
+            ...pairScore,
+            score: pairScore.score + boardScore,
+          };
+        });
 
         const newState = {
           ...prev,
           currentBoard: prev.currentBoard + 1,
           tableStates: newTableStates,
           pairScores: newPairScores,
+          boardResults: newBoardResults,
         };
 
         // Sauvegarder immédiatement le nouvel état
@@ -226,10 +259,13 @@ export default function TournamentPlay() {
     // Nettoyer le localStorage avant de naviguer vers les résultats
     localStorage.removeItem('tournament_state');
     
+    console.log('Board results before navigation:', tournamentState.boardResults);
+    
     navigate('/tournament/results', {
       state: {
         tables,
         pairScores: tournamentState.pairScores,
+        boardResults: tournamentState.boardResults,
       },
     });
   };
